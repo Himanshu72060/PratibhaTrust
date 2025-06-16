@@ -1,36 +1,70 @@
+// routes/teacherRoutes.js
 const express = require('express');
 const router = express.Router();
-const Event = require('../models/Event');
-const upload = require('../middleware/upload');
+const multer = require('multer');
+const Teacher = require('../models/Teacher');
 
+// Multer config
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage });
+
+// CREATE
 router.post('/', upload.single('image'), async (req, res) => {
     try {
-        const event = new Event({ title: req.body.title, image: req.file.path, profession: req.body.profession });
-        await event.save();
-        res.status(201).json(event);
+        const teacher = new Teacher({
+            image: req.file ? req.file.path : null,
+            name: req.body.name,
+            profession: req.body.profession
+        });
+        await teacher.save();
+        res.status(201).json(teacher);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
+// READ
 router.get('/', async (req, res) => {
-    const events = await Event.find();
-    res.json(events);
+    try {
+        const teachers = await Teacher.find();
+        res.json(teachers);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
+// UPDATE
 router.put('/:id', upload.single('image'), async (req, res) => {
-    const updated = await Event.findByIdAndUpdate(req.params.id, {
-        title: req.body.title,
-        profession: req.body.profession,
-        // If an image is uploaded, update the image path
-        ...(req.file && { image: req.file.path })
-    }, { new: true });
-    res.json(updated);
+    try {
+        const updatedData = {
+            name: req.body.name,
+            profession: req.body.profession
+        };
+        if (req.file) {
+            updatedData.image = req.file.path;
+        }
+        const teacher = await Teacher.findByIdAndUpdate(req.params.id, updatedData, { new: true });
+        res.json(teacher);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
+// DELETE
 router.delete('/:id', async (req, res) => {
-    await Event.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Deleted successfully' });
+    try {
+        await Teacher.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Teacher deleted successfully' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 module.exports = router;
