@@ -5,7 +5,7 @@ const upload = require('../middleware/upload');
 
 router.post('/', upload.single('image'), async (req, res) => {
     try {
-        const event = new Event({ title: req.body.title, image: req.file.path });
+        const event = new Event({ title: req.body.title, image: req.file.path, profession: req.body.profession });
         await event.save();
         res.status(201).json(event);
     } catch (err) {
@@ -21,6 +21,8 @@ router.get('/', async (req, res) => {
 router.put('/:id', upload.single('image'), async (req, res) => {
     const updated = await Event.findByIdAndUpdate(req.params.id, {
         title: req.body.title,
+        profession: req.body.profession,
+        // If an image is uploaded, update the image path
         ...(req.file && { image: req.file.path })
     }, { new: true });
     res.json(updated);
